@@ -1,0 +1,104 @@
+
+Run a series of experiments as described below and answer the following questions. For each experiment, 
+	•	Zero all toggle counters (>za).
+	•	Toggle the LEDs for approximately 30 seconds.
+	•	Record the number of toggles for all LEDs (>pa).
+
+1. Use your original version of toggling the red LED that uses for-loops. Toggle all 3 at 1Hz. (Do not type in any menu options while you are toggling until the 1 minute is up). How good was your WCET analysis of the for loop? If it is very far off, adjust it. Why did I not want you to use the menu while running the experiment? 
+
+The WCET wasn’t too far off. The numbers matched up pretty well.
+The menu can cause unexpected overhead delays and can cause the numbers to be off because of the delay caused by the processing overhead.
+
+2. Use your software timer to toggle the red LED. Toggle all 3 at 1Hz. Simply observe the final toggle count. All should be about 60 (maybe the red is off by 1). If this is not the case, you probably set something up wrong, and you should fix it. 
+
+Entered ta1000 to run a 1000ms toggle. Ran for 30 seconds.
+
+Results:
+Toggles R:61
+Toggles Y:62
+Toggles G:64
+
+The toggle counts are fairly close, although not exactly the same.
+
+3. Set all LEDs to toggle at 2Hz (500ms). Place a 90ms busy-wait for-loop into the ISR for the green LED. Toggle for 1 minute and record results. Now move the 90ms busy-wait for-loop from the green into the ISR for the yellow LED. Toggle for 1 minute and record results. What did you observe? Did the busy-wait disrupt any of the LEDs? Explain your results. 
+
+Entered ta500 to run a 500 ms toggle. Ran for 1 min.
+
+Green Results:
+Toggles R:200
+Toggles Y:308
+Toggles G:254
+
+These results do not seem correct. I believe the issue is because the yellow LED has 100ms interrupts which is an issue with the 500ms toggle where a toggle is a cycle of on and off.
+
+Entered ta1000 instead to run a 1000ms toggle. Ran for 1 min.
+
+New Green Results:
+Toggles R:114
+Toggles Y:123
+Toggles G:126
+
+Yellow Results:
+Toggles R:31
+Toggles Y:306
+Toggles G:252
+
+Also does not seem correct because of the yellow LED’s interrupt.
+
+Entered ta1000 instead to run a 1000ms toggle. Ran for 1 min.
+
+New Yellow Results:
+Toggles R:16
+Toggles Y:123
+Toggles G:126
+
+These results look better. For the delay in the Green ISR, the delay is creating a block for 90ms out of 600ms. This block causes the red interrupt to be blocked 9/60 of the time. The yellow LED could also be blocked during this time if it happens to fall at the same time the interrupt is being fired. For the delay in the yellow ISR, the delay is creating a block for 90 out of 100ms. This block causes the red interrupt to blocked 9/10 of the time because the yellow interrupt fires every 100ms. The yellow results show this with being roughly 1/10 of the yellow and green results.
+
+4. Repeat #3, except use a 110ms busy-wait. You probably won’t be able to use the menu functions. If not, report that, and discuss what you observed from the blinking. Explain your results.
+
+Based on #3, I entered ta1000 instead to run a 1000ms toggle. Ran for 1 min.
+
+Green Results:
+Toggles R:108
+Toggles Y:121
+Toggles G:125
+
+Yellow Results:
+Toggles R:0
+Toggles Y:118
+Toggles G:126
+
+The results for the delay in the Green ISR were fairly similar to #3, but there were slightly less toggles of red because now the red interrupt was being blocked 11/100 times. The yellow and green toggles were about the same as in #3. I was unable to use the terminal for the delay in the yellow ISR. The red LED was never triggered because the delay was blocking the red interrupt 11/10 times or all of the time.
+
+5. Repeat #3, except use a 510ms busy-wait. Explain your results.
+
+Based on #3, I entered ta1000 instead to run a 1000ms toggle. Ran for 1 min.
+
+Green Results:
+Toggles R:60
+Toggles Y:72
+Toggles G:126
+
+Yellow Results:
+Toggles R:0
+Toggles Y:25
+Toggles G:125
+
+The results for the Green ISR show that red is blocked 51/100 times. Yellow is also blocked about half of the time now as well. When the delay was in the Yellow ISR, i was unable to use the terminal. Red was again blocked all of time time, technically 51/10 times. Yellow was also blocked more, but not completely.
+
+6. Repeat #5 (i.e. 2Hz toggle with 510ms busy-wait), except place an sei() at the top of the ISR with the for-loop in it. Explain your results.
+
+Based on #3, I entered ta1000 instead to run a 1000ms toggle. Ran for 1 min.
+
+Green Results:
+Toggles R:59
+Toggles Y:123
+Toggles G:126
+
+Yellow Results:
+Toggles R:0
+Toggles Y:121
+Toggles G:126
+
+The results for the Green ISR show that yellow is no longer affected. The sei() allows it to be fired regardless of the delay. The red LED is still affected because of where interrupt is taking place, in the while loop instead of in the timer function. The yellow results show that the red is not fired, just like in #5. The red isn’t able to fire because the delay is still completely the red interrupt. The yellow now unaffected because the sei() clears it and allows the yellow interrupt to fire at any time.
+
